@@ -58,9 +58,9 @@ EER across 10 epochs: 0.0377
 
 # D vector embedding creation
 
-After training and testing the model, run dvector_create.py to create the numpy files train_sequence.npy, train_cluster_ids.npy, test_sequence.npy, and test_cluster_ids.npy. 
+After training and testing the model, run dvector.py to create the data.pkl
 
-These files can be loaded and used to train the uis-rnn model found at https://github.com/google/uis-rnn
+The file can be loaded and used to train the triple-loss model.
 # Reference
 After create dvector,we use the triplet loss to train a model which are discribed here: https://arxiv.org/pdf/1705.02304.pdf
 When reference speakers,python cli.py
