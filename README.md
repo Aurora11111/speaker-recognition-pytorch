@@ -29,7 +29,7 @@ Run the preprocessing script:
 ```
 Two folders will be created, train_tisv and test_tisv, containing .npy files containing numpy ndarrays of speaker utterances with a 90%/10% training/testing split.
 
-# Training
+# GE2E-loss model training
 
 To train the speaker verification model, run:
 ```
