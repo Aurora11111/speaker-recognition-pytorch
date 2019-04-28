@@ -63,5 +63,5 @@ After training and testing the model, run dvector.py to create the data.pkl
 The file can be loaded and used to train the triple-loss model.
 # Reference
 After create dvector,we use the triplet loss to train a model which are discribed here: https://arxiv.org/pdf/1705.02304.pdf
-When reference speakers,python cli.py
+When reference speakers,run cli.py
 
