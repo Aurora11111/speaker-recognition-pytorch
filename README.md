@@ -61,7 +61,10 @@ EER across 10 epochs: 0.0377
 After training and testing the model, run dvector.py to create the data.pkl
 
 The file can be loaded and used to train the triple-loss model.
-# Reference
+
+# triplet-loss model training
 After create dvector,we use the triplet loss to train a model which are discribed here: https://arxiv.org/pdf/1705.02304.pdf
+run train.py
+# Reference
 When reference speakers,run cli.py
 
