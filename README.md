@@ -1,5 +1,4 @@
-# PyTorch_Speaker_Verification
-
+# speaker recognition
 PyTorch implementation of speech embedding net and loss described here: https://arxiv.org/pdf/1710.10467.pdf.
 
 Also contains code to create embeddings compatible as input for the speaker diarization model found at https://github.com/google/uis-rnn
