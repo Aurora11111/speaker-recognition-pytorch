@@ -62,4 +62,6 @@ After training and testing the model, run dvector_create.py to create the numpy 
 
 These files can be loaded and used to train the uis-rnn model found at https://github.com/google/uis-rnn
 # Reference
+After create dvector,we use the triplet loss to train a model which are discribed here: https://arxiv.org/pdf/1705.02304.pdf
+When reference speakers,python cli.py
 
