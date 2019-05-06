@@ -8,6 +8,7 @@ from constants import c
 from speech_features import get_mfcc_features_390
 from train import triplet_softmax_model
 from utils import normalize, InputsGenerator
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +29,25 @@ def generate_features_for_unseen_speakers(audio_reader, target_speaker='p363'):
     inputs = inputs_generator.generate_inputs_for_inference(target_speaker)
     return inputs
 
-def myinference_unseen_speakers(sp1, sp2):
-    import pickle
+
+def random_line(afile):
+    line = next(iter(afile))
+    for num, aline in enumerate(afile, 2):
+      if random.randrange(num): continue
+      line = aline
+    return line
+
+import math
+def  myinference_unseen_speakers(sp1, sp2):
+    import pickle,glob
     sp1_feat = pickle.load(open('/run/media/rice/DATA/OUTPUT2/'+sp1+'.pkl', 'rb'))[sp1]
     sp2_feat = pickle.load(open('/run/media/rice/DATA/OUTPUT2/'+sp2+'.pkl', 'rb'))[sp2]
+    files = glob.glob('/run/media/rice/DATA/OUTPUT2/*.pkl')
+    file = random_line(files)
+    print(file)
+    randsp = file[len('/run/media/rice/DATA/OUTPUT2/'):-4]
+    print(randsp)
+    randsp_feat = pickle.load(open(file, 'rb'))[randsp]
 
     # batch_size => None (for inference).
     m = triplet_softmax_model(num_speakers_softmax=len(c.AUDIO.SPEAKERS_TRAINING_SET),
@@ -39,7 +55,7 @@ def myinference_unseen_speakers(sp1, sp2):
                               normalize_embeddings=True,
                               batch_size=None)
 
-    checkpoints = natsorted(glob('checkpoints/*.h5'))
+    checkpoints = natsorted(glob.glob('checkpoints/*.h5'))
 
     # compile_triplet_softmax_model(m, loss_on_softmax=False, loss_on_embeddings=False)
     print("m summary   "*20)
@@ -57,10 +73,12 @@ def myinference_unseen_speakers(sp1, sp2):
     print(type(sp1_feat))
     emb_sp1 = m.predict(np.vstack(sp1_feat))[0]
     emb_sp2 = m.predict(np.vstack(sp2_feat))[0]
+    emb_randsp = m.predict(np.vstack(randsp_feat))[0]
 
     logger.info('Checking that L2 norm is 1.')
     logger.info(np.mean(np.linalg.norm(emb_sp1, axis=1)))
     logger.info(np.mean(np.linalg.norm(emb_sp2, axis=1)))
+    logger.info(np.mean(np.linalg.norm(emb_randsp, axis=1)))
 
     from scipy.spatial.distance import cosine
 
@@ -71,16 +89,55 @@ def myinference_unseen_speakers(sp1, sp2):
 
     logger.info('Emb1.shape = {}'.format(emb_sp1.shape))
     logger.info('Emb2.shape = {}'.format(emb_sp2.shape))
+    logger.info('Emb2.shape = {}'.format(emb_randsp.shape))
 
     emb1 = np.mean(emb_sp1, axis=0)
     emb2 = np.mean(emb_sp2, axis=0)
+    emb_randsp = np.mean(emb_randsp,axis=0)
+
+
+    same_sp1 = ''
+    same_sp2 = ''
+    same_sp_emb1 = emb1
+    same_sp_emb2 = emb2
+    most_same_emb1 = 1.0
+    most_same_emb2 = 1.0
+    files.remove('/run/media/rice/DATA/OUTPUT2/'+sp1+'.pkl')
+    files.remove('/run/media/rice/DATA/OUTPUT2/'+sp2+'.pkl')
+    for f in files:
+        sp = f[len('/run/media/rice/DATA/OUTPUT2/'):-4]
+        sp_feat = pickle.load(open(f, 'rb'))[sp]
+        emb_sp = np.mean(m.predict(np.vstack(sp_feat))[0],axis=0)
+        if cosine(emb1,emb_sp) < most_same_emb1:
+            same_sp1 = f
+            same_sp_emb1 = emb_sp
+            most_same_emb1 = cosine(emb1,emb_sp)
+        if cosine(emb2, emb_sp) < most_same_emb2:
+            same_sp2 = f
+            same_sp_emb2 = emb_sp
+            most_same_emb2 = cosine(emb2, emb_sp)
 
     logger.info('Cosine = {}'.format(cosine(emb1, emb2)))
+    logger.info('Cosine = {}'.format(most_same_emb1))
+    logger.info('Cosine = {}'.format(most_same_emb2))
 
-    # print('SAP =', np.mean([cosine(u, v) for (u, v) in zip(emb_sp1[:-1], emb_sp1[1:])]))
-    # print('SAN =', np.mean([cosine(u, v) for (u, v) in zip(emb_sp1, emb_sp2)]))
-    # print('We expect: SAP << SAN.')
+    cos1_2 = int(math.log10(cosine(emb1, emb2)))
+    cos1_11 = int(math.log10(most_same_emb1))
+    cos2_22 = int(math.log10(most_same_emb2))
 
+
+    if cos1_2 > -4:
+        print('they are diferent speakers')
+    else:
+        print('they are same speaker')
+    if cos1_11 <= -4 :
+        print(sp1,"is in the database")
+    else:
+        print(sp1,"is not in the database")
+    if cos2_22 <= -4:
+        print(sp2,"is in the database")
+    else:
+        print(sp2,"is not in the database")
 
 def inference_unseen_speakers(audio_reader, sp1, sp2):
     sp1_feat = generate_features_for_unseen_speakers(audio_reader, target_speaker=sp1)
@@ -125,10 +182,10 @@ def inference_unseen_speakers(audio_reader, sp1, sp2):
     emb2 = np.mean(emb_sp2, axis=0)
 
     logger.info('Cosine = {}'.format(cosine(emb1, emb2)))
+    logger.info('SAP = {}'.format( np.mean([cosine(u, v) for (u, v) in zip(emb_sp1[:-1], emb_sp1[1:])])))
+    logger.info('SAN = {}'.format(np.mean([cosine(u, v) for (u, v) in zip(emb_sp1, emb_sp2)])))
+    logger.info('We expect: SAP << SAN.')
 
-    # print('SAP =', np.mean([cosine(u, v) for (u, v) in zip(emb_sp1[:-1], emb_sp1[1:])]))
-    # print('SAN =', np.mean([cosine(u, v) for (u, v) in zip(emb_sp1, emb_sp2)]))
-    # print('We expect: SAP << SAN.')
 
 
 def inference_embeddings(audio_reader, speaker_id):
@@ -156,7 +213,3 @@ def inference_embeddings(audio_reader, speaker_id):
 
     np.set_printoptions(suppress=True)
     emb1 = np.mean(emb_sp1, axis=0)
-
-    print('*' * 80)
-    print(emb1)
-    print('*' * 80)
