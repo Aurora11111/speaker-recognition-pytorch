@@ -70,6 +70,8 @@ When reference speakers,run cli.py
 
 
 https://github.com/HarryVolek/PyTorch_Speaker_Verification
+
+
 https://github.com/philipperemy/deep-speaker
 
 
