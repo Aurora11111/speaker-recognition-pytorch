@@ -67,6 +67,8 @@ After create dvector,we use the triplet loss to train a model which are discribe
 run train.py
 # Reference
 When reference speakers,run cli.py
+
+
 https://github.com/HarryVolek/PyTorch_Speaker_Verification
 https://github.com/philipperemy/deep-speaker
 
